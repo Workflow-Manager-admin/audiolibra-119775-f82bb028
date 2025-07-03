@@ -30,23 +30,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  audioplayers: ^4.0.0  # Updated for Android/Flutter AGP namespace compliance
   cupertino_icons: ^1.0.8
-  shared_preferences: ^2.1.0
+  shared_preferences: ^2.2.2
+  just_audio: ^0.9.36
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
 
-# Dependency overrides to ensure namespace-compliant audioplayers plugins.
-dependency_overrides:
-  audioplayers_android: ^4.0.0
-  audioplayers_darwin: ^4.0.0
-  audioplayers_linux: ^4.0.0
-  audioplayers_platform_interface: ^5.0.0
-  audioplayers_web: ^4.0.0
-  audioplayers_windows: ^4.0.0
+# No audioplayers dependency, just_audio is used for playback.
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

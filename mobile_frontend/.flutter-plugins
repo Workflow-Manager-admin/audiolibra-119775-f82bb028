@@ -1,10 +1,7 @@
 # This is a generated file; do not edit or check into version control.
-audioplayers=/home/kavia/.pub-cache/hosted/pub.dev/audioplayers-4.1.0/
-audioplayers_android=/home/kavia/.pub-cache/hosted/pub.dev/audioplayers_android-4.0.3/
-audioplayers_darwin=/home/kavia/.pub-cache/hosted/pub.dev/audioplayers_darwin-4.1.0/
-audioplayers_linux=/home/kavia/.pub-cache/hosted/pub.dev/audioplayers_linux-4.2.1/
-audioplayers_web=/home/kavia/.pub-cache/hosted/pub.dev/audioplayers_web-4.1.0/
-audioplayers_windows=/home/kavia/.pub-cache/hosted/pub.dev/audioplayers_windows-4.2.1/
+audio_session=/home/kavia/.pub-cache/hosted/pub.dev/audio_session-0.1.25/
+just_audio=/home/kavia/.pub-cache/hosted/pub.dev/just_audio-0.9.46/
+just_audio_web=/home/kavia/.pub-cache/hosted/pub.dev/just_audio_web-0.4.16/
 path_provider=/home/kavia/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
 path_provider_android=/home/kavia/.pub-cache/hosted/pub.dev/path_provider_android-2.2.17/
 path_provider_foundation=/home/kavia/.pub-cache/hosted/pub.dev/path_provider_foundation-2.4.1/
