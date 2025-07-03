@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'player_screen.dart';
 
 // Model for an Audiobook
 class Audiobook {
@@ -7,12 +8,14 @@ class Audiobook {
   final String title;
   final String author;
   final String coverUrl;
+  final String audioUrl;
 
   Audiobook({
     required this.id,
     required this.title,
     required this.author,
     required this.coverUrl,
+    required this.audioUrl,
   });
 
   // PUBLIC_INTERFACE
@@ -22,6 +25,7 @@ class Audiobook {
       title: map['title'],
       author: map['author'],
       coverUrl: map['coverUrl'],
+      audioUrl: map['audioUrl'],
     );
   }
 
@@ -32,6 +36,7 @@ class Audiobook {
       'title': title,
       'author': author,
       'coverUrl': coverUrl,
+      'audioUrl': audioUrl,
     };
   }
 }
@@ -44,19 +49,10 @@ class LibraryStorage {
   static Future<List<Audiobook>> getPurchasedAudiobooks() async {
     final prefs = await SharedPreferences.getInstance();
     final purchasedList = prefs.getStringList(_purchasedBooksKey) ?? [];
-    // Each item is a JSON encoded string map.
+    // Each item is a JSON-encoded string map (simple encoding), adjust as needed.
     return purchasedList.map((bookStr) {
       try {
-        final map = Map<String, dynamic>.from(
-          // Slightly hacky, but safe since audiobooks are always stored as map json
-          (bookStr.startsWith('{')) //
-              ? Map<String, dynamic>.from(
-                  // ignore: unnecessary_cast
-                  (bookStr.isNotEmpty
-                      ? (bookStr as dynamic) // workaround for linter
-                      : {}))
-              : {},
-        );
+        final map = Map<String, dynamic>.from(Uri.splitQueryString(bookStr));
         return Audiobook.fromMap(map);
       } catch (_) {
         return null;
@@ -123,7 +119,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
               return _AudiobookCard(
                 audiobook: book,
                 onTap: () {
-                  // TODO: Navigate to detail/player screen for this book
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PlayerScreen(
+                        audioSource: book.audioUrl,
+                        bookId: book.id,
+                        title: book.title,
+                        coverImage: book.coverUrl,
+                        details: book.author,
+                      ),
+                    ),
+                  );
                 },
               );
             },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'library_screen.dart';
+import 'player_screen.dart';
 
 void main() {
   runApp(const AudioLibraApp());
@@ -59,6 +60,7 @@ class Audiobook {
   final double price;
   final String coverUrl;
   final String description;
+  final String audioUrl;
 
   Audiobook({
     required this.id,
@@ -67,6 +69,7 @@ class Audiobook {
     required this.price,
     required this.coverUrl,
     required this.description,
+    required this.audioUrl,
   });
 }
 
@@ -79,6 +82,7 @@ final List<Audiobook> kSampleBooks = [
     price: 12.99,
     coverUrl: 'https://covers.openlibrary.org/b/id/7884866-L.jpg',
     description: 'A literary classic about the roaring 1920s and the mysterious Jay Gatsby.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   ),
   Audiobook(
     id: 'a2',
@@ -87,6 +91,7 @@ final List<Audiobook> kSampleBooks = [
     price: 10.50,
     coverUrl: 'https://covers.openlibrary.org/b/id/7222246-L.jpg',
     description: 'Dystopian masterpiece warning about state surveillance and repression.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
   ),
   Audiobook(
     id: 'a3',
@@ -95,6 +100,7 @@ final List<Audiobook> kSampleBooks = [
     price: 11.25,
     coverUrl: 'https://covers.openlibrary.org/b/id/8228691-L.jpg',
     description: 'A powerful tale about childhood and racial injustice in the Deep South.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
   ),
   Audiobook(
     id: 'a4',
@@ -103,6 +109,7 @@ final List<Audiobook> kSampleBooks = [
     price: 9.75,
     coverUrl: 'https://covers.openlibrary.org/b/id/5555116-L.jpg',
     description: 'A thrilling sea adventure in pursuit of the legendary white whale.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
   ),
   Audiobook(
     id: 'a5',
@@ -111,6 +118,7 @@ final List<Audiobook> kSampleBooks = [
     price: 8.99,
     coverUrl: 'https://covers.openlibrary.org/b/id/8091016-L.jpg',
     description: 'An enduring romance with biting social commentary and brilliant wit.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
   ),
   Audiobook(
     id: 'a6',
@@ -119,6 +127,7 @@ final List<Audiobook> kSampleBooks = [
     price: 13.49,
     coverUrl: 'https://covers.openlibrary.org/b/id/6979861-L.jpg',
     description: 'Fantasy adventure that sets the stage for The Lord of the Rings.',
+    audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
   ),
 ];
 
@@ -224,6 +233,22 @@ class _StoreScreenState extends State<StoreScreen> {
         book: book,
         isPurchased: purchased,
         onBuy: purchased ? null : handleBuy,
+        onPlay: purchased
+            ? () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PlayerScreen(
+                      audioSource: book.audioUrl,
+                      bookId: book.id,
+                      title: book.title,
+                      coverImage: book.coverUrl,
+                      details: book.author,
+                    ),
+                  ),
+                );
+              }
+            : null,
       ),
     ).whenComplete(_refreshPurchased);
   }
@@ -261,6 +286,7 @@ class _StoreScreenState extends State<StoreScreen> {
                 itemCount: kSampleBooks.length,
                 itemBuilder: (context, index) {
                   final book = kSampleBooks[index];
+
                   final isPurchased = purchasedIds.contains(book.id);
 
                   return GestureDetector(
@@ -348,6 +374,7 @@ class BookDetailSheet extends StatelessWidget {
   final Audiobook book;
   final bool isPurchased;
   final VoidCallback? onBuy;
+  final VoidCallback? onPlay;
 
   // PUBLIC_INTERFACE
   const BookDetailSheet({
@@ -355,6 +382,7 @@ class BookDetailSheet extends StatelessWidget {
     required this.book,
     required this.isPurchased,
     required this.onBuy,
+    this.onPlay,
   });
 
   @override
@@ -443,30 +471,41 @@ class BookDetailSheet extends StatelessWidget {
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 36),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      icon: isPurchased
-                          ? const Icon(Icons.check_circle, color: Colors.white)
-                          : const Icon(Icons.shopping_bag, color: Colors.white),
-                      onPressed: isPurchased ? null : onBuy,
-                      label: Text(
-                        isPurchased ? 'Book Purchased' : 'Buy Now',
-                        style: const TextStyle(fontSize: 18),
+                  if (isPurchased)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.headphones, color: Colors.white),
+                        onPressed: onPlay,
+                        label: const Text('Listen', style: TextStyle(fontSize: 18)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
+                        ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isPurchased
-                            ? Colors.grey
-                            : Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        elevation: 2,
-                        disabledBackgroundColor: Colors.grey[400],
+                    )
+                  else
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.shopping_bag, color: Colors.white),
+                        onPressed: onBuy,
+                        label: const Text('Buy Now', style: TextStyle(fontSize: 18)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          elevation: 2,
+                          disabledBackgroundColor: Colors.grey[400],
+                        ),
                       ),
                     ),
-                  )
                 ],
               ),
             ),
