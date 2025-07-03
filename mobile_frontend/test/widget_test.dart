@@ -6,7 +6,7 @@ import 'package:mobile_frontend/main.dart';
 void main() {
   testWidgets('App loads and displays correct initial tab', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const AudioLibraApp());
+    await tester.pumpWidget(AudiolibraApp());
 
     // Should find the Store tab content
     expect(find.textContaining('Store'), findsWidgets);
