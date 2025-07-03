@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'library_screen.dart';
 
 void main() {
-  runApp(AudioLibraApp());
+  runApp(const AudioLibraApp());
 }
 
 /// Main App widget for the Audiobook Store & Player.
@@ -24,9 +25,29 @@ class AudioLibraApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: StoreScreen(),
+      home: const _MainNavigation(),
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+/// Key for storing purchased IDs in SharedPreferences.
+const String purchasedBooksKey = 'purchased_books';
+
+/// A utility class for persistence of purchased books.
+class PurchaseStore {
+  /// Loads the list of purchased book ids.
+  static Future<Set<String>> loadPurchased() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(purchasedBooksKey)?.toSet() ?? {};
+  }
+
+  /// Adds a purchased book id and persists it.
+  static Future<void> purchase(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final purchased = prefs.getStringList(purchasedBooksKey)?.toSet() ?? {};
+    purchased.add(id);
+    await prefs.setStringList(purchasedBooksKey, purchased.toList());
   }
 }
 
@@ -101,23 +122,54 @@ final List<Audiobook> kSampleBooks = [
   ),
 ];
 
-/// Key for storing purchased IDs in SharedPreferences.
-const String purchasedBooksKey = 'purchased_books';
+/// The main navigation widget using a BottomNavigationBar.
+class _MainNavigation extends StatefulWidget {
+  const _MainNavigation();
 
-/// A utility class for persistence of purchased books.
-class PurchaseStore {
-  /// Loads the list of purchased book ids.
-  static Future<Set<String>> loadPurchased() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(purchasedBooksKey)?.toSet() ?? {};
+  @override
+  State<_MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<_MainNavigation> {
+  int _selectedIndex = 0;
+
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      StoreScreen(),
+      const LibraryScreen(),
+    ];
   }
 
-  /// Adds a purchased book id and persists it.
-  static Future<void> purchase(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    final purchased = prefs.getStringList(purchasedBooksKey)?.toSet() ?? {};
-    purchased.add(id);
-    await prefs.setStringList(purchasedBooksKey, purchased.toList());
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.storefront),
+            label: 'Store',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.library_books),
+            label: 'Library',
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -150,13 +202,12 @@ class _StoreScreenState extends State<StoreScreen> {
 
   void _onTapBook(Audiobook book) async {
     final purchased = purchasedIds.contains(book.id);
-    // Refactor: Hoist all build context use out of async gaps.
+
     Future<void> handleBuy() async {
       await PurchaseStore.purchase(book.id);
       await _refreshPurchased();
       if (!mounted) return;
       Navigator.of(context).pop();
-      // Show snackbar after navigator pop and before entering new async gap
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Purchased "${book.title}"!'),
@@ -184,7 +235,6 @@ class _StoreScreenState extends State<StoreScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             purchasedIds.isEmpty) {
-          // Loading indicator for first load
           return Scaffold(
             appBar: AppBar(
               title: const Text('Audiobook Store'),
@@ -194,7 +244,6 @@ class _StoreScreenState extends State<StoreScreen> {
             ),
           );
         } else {
-          // Use state value `purchasedIds` for up-to-date purchases
           return Scaffold(
             appBar: AppBar(
               title: const Text('Audiobook Store'),
@@ -204,7 +253,7 @@ class _StoreScreenState extends State<StoreScreen> {
               padding: const EdgeInsets.all(12.0),
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // 2 columns for mobile grid
+                  crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                   childAspectRatio: 0.68,
@@ -244,7 +293,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 8, 8, 2),
                             child: Text(
                               book.title,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontWeight: FontWeight.w600, fontSize: 16),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -259,7 +308,7 @@ class _StoreScreenState extends State<StoreScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Spacer(),
+                          const Spacer(),
                           Padding(
                             padding: const EdgeInsets.fromLTRB(12, 4, 8, 10),
                             child: Row(
@@ -329,7 +378,7 @@ class BookDetailSheet extends StatelessWidget {
                     child: Container(
                       width: 48,
                       height: 6,
-                      margin: EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(6),
@@ -349,28 +398,28 @@ class BookDetailSheet extends StatelessWidget {
                             color: Colors.grey[200],
                             width: 75,
                             height: 100,
-                            child: Icon(Icons.image_not_supported,
-                                size: 40, color: Colors.grey[400]),
+                            child: const Icon(Icons.image_not_supported,
+                                size: 40, color: Colors.grey),
                           ),
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               book.title,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 19),
                             ),
-                            SizedBox(height: 7),
+                            const SizedBox(height: 7),
                             Text(
                               book.author,
                               style: TextStyle(
                                   fontSize: 15, color: Colors.grey[700]),
                             ),
-                            SizedBox(height: 15),
+                            const SizedBox(height: 15),
                             Text(
                               isPurchased
                                   ? "Purchased"
@@ -388,23 +437,23 @@ class BookDetailSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Text(
                     book.description,
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  SizedBox(height: 36),
+                  const SizedBox(height: 36),
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
                       icon: isPurchased
-                          ? Icon(Icons.check_circle, color: Colors.white)
-                          : Icon(Icons.shopping_bag, color: Colors.white),
+                          ? const Icon(Icons.check_circle, color: Colors.white)
+                          : const Icon(Icons.shopping_bag, color: Colors.white),
                       onPressed: isPurchased ? null : onBuy,
                       label: Text(
                         isPurchased ? 'Book Purchased' : 'Buy Now',
-                        style: TextStyle(fontSize: 18),
+                        style: const TextStyle(fontSize: 18),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isPurchased
