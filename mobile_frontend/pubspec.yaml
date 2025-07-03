@@ -30,8 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  audioplayers: ^3.0.1  # Update to latest compatible for namespace fix
   cupertino_icons: ^1.0.8
-  audioplayers: ^1.1.1
   shared_preferences: ^2.1.0
 
 dev_dependencies:

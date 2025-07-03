@@ -2,6 +2,16 @@
 
 A new Flutter project.
 
+## Notes for Android Build
+
+- The `audioplayers` package has been updated to ^3.0.1 for Android namespace compatibility (see https://d.android.com/r/tools/upgrade-assistant/set-namespace).
+- If you experience build errors, recompute dependencies with:
+
+  ```sh
+  flutter pub upgrade
+  ```
+
+- For additional help on Flutter Android namespaces, see [Flutter/Android migration guide](https://docs.flutter.dev/release/breaking-changes/android-gradle-plugin-7-0-0).
 ## Getting Started
 
 This project is a starting point for a Flutter application.
