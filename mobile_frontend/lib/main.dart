@@ -228,7 +228,8 @@ class _StoreScreenState extends State<StoreScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => BookDetailSheet(
         book: book,
         isPurchased: purchased,
@@ -239,11 +240,12 @@ class _StoreScreenState extends State<StoreScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => PlayerScreen(
-                      audioSource: book.audioUrl,
                       bookId: book.id,
                       title: book.title,
-                      coverImage: book.coverUrl,
-                      details: book.author,
+                      author: book.author,
+                      coverUrl: book.coverUrl,
+                      audioUrl: book.audioUrl,
+                      isOwned: true,
                     ),
                   ),
                 );
@@ -302,12 +304,14 @@ class _StoreScreenState extends State<StoreScreen> {
                           AspectRatio(
                             aspectRatio: 11 / 16,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                              borderRadius:
+                                  BorderRadius.vertical(top: Radius.circular(15)),
                               child: Image.network(
                                 book.coverUrl,
                                 fit: BoxFit.cover,
                                 width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) => Container(
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
                                   color: Colors.grey[200],
                                   child: Icon(Icons.image_not_supported,
                                       size: 48, color: Colors.grey[400]),
@@ -329,7 +333,8 @@ class _StoreScreenState extends State<StoreScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 0, 8, 0),
                             child: Text(
                               book.author,
-                              style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                              style: TextStyle(
+                                  color: Colors.grey[700], fontSize: 13),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -341,7 +346,9 @@ class _StoreScreenState extends State<StoreScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  isPurchased ? "Purchased" : "\$${book.price.toStringAsFixed(2)}",
+                                  isPurchased
+                                      ? "Purchased"
+                                      : "\$${book.price.toStringAsFixed(2)}",
                                   style: TextStyle(
                                     color: isPurchased
                                         ? Theme.of(context).colorScheme.secondary
@@ -350,7 +357,8 @@ class _StoreScreenState extends State<StoreScreen> {
                                     fontSize: 15,
                                   ),
                                 ),
-                                Icon(Icons.info_outline, size: 21, color: Colors.grey[600])
+                                Icon(Icons.info_outline,
+                                    size: 21, color: Colors.grey[600])
                               ],
                             ),
                           ),

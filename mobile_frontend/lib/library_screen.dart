@@ -123,11 +123,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => PlayerScreen(
-                        audioSource: book.audioUrl,
                         bookId: book.id,
                         title: book.title,
-                        coverImage: book.coverUrl,
-                        details: book.author,
+                        author: book.author,
+                        coverUrl: book.coverUrl,
+                        audioUrl: book.audioUrl,
+                        isOwned: true,
                       ),
                     ),
                   );
