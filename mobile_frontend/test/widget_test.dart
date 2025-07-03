@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:mobile_frontend/main.dart';
 
 void main() {
-  testWidgets('App generation message displayed', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App loads and displays correct initial tab', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const AudioLibraApp());
 
-    expect(find.text('mobile_frontend App is being generated...'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-  });
+    // Should find the Store tab content
+    expect(find.textContaining('Store'), findsWidgets);
 
-  testWidgets('App bar has correct title', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
-
-    expect(find.text('mobile_frontend'), findsOneWidget);
+    // Switch to Library tab and check if Library content is visible
+    await tester.tap(find.widgetWithIcon(NavigationDestination, Icons.my_library_books_outlined));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Library'), findsWidgets);
   });
 }
