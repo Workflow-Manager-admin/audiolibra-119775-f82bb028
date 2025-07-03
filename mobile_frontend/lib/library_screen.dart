@@ -1,70 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'store_logic.dart';
-import 'player_screen.dart';
+import 'store_screen.dart'; // for Book class and dummy storeBooks
 
-class LibraryScreen extends StatelessWidget {
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
 
   @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  late StoreLibraryModel _model;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    StoreLibraryModel.getInstance().then((m) {
+      _model = m;
+      _model.addListener(_onLibraryChanged);
+      setState(() {
+        _loading = false;
+      });
+    });
+  }
+
+  void _onLibraryChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    if (!_loading) {
+      _model.removeListener(_onLibraryChanged);
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final libraryStore = Provider.of<LibraryStore>(context);
-    final bookIds = libraryStore.ownedBooks.toList();
-
-    // These would come from the persisted catalog in a real app
-    final bookData = {
-      "b1": {
-        "title": "The Swift Journey",
-        "author": "Jane Doe",
-        "coverUrl": "",
-        "audioUrl": "",
-      },
-      "b2": {
-        "title": "Flutter for All",
-        "author": "John Smith",
-        "coverUrl": "",
-        "audioUrl": "",
-      },
-      "b3": {
-        "title": "AI Revolution",
-        "author": "Susan Lin",
-        "coverUrl": "",
-        "audioUrl": "",
-      },
-    };
-
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final userBookIds = _model.libraryBookIds;
+    final userBooks = storeBooks.where((b) => userBookIds.contains(b.id)).toList();
+    if (userBooks.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Library')),
+        body: const Center(child: Text("No books in your library yet.\nBuy books from the Store!")),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Library')),
-      body: bookIds.isEmpty
-        ? const Center(child: Text("No books in library.\nGo to Store & Buy!", textAlign: TextAlign.center,))
-        : ListView.builder(
-            itemCount: bookIds.length,
-            itemBuilder: (context, idx) {
-              final id = bookIds[idx];
-              final title = bookData[id]?["title"] ?? "Unknown Title";
-              final author = bookData[id]?["author"] ?? "Unknown Author";
-              final coverUrl = bookData[id]?["coverUrl"] ?? "";
-              final audioUrl = bookData[id]?["audioUrl"] ?? "";
-              return ListTile(
-                leading: const Icon(Icons.headset, color: Colors.green),
-                title: Text(title),
-                subtitle: Text(author),
-                trailing: const Text('Owned', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => PlayerScreen(
-                      bookId: id,
-                      title: title,
-                      author: author,
-                      coverUrl: coverUrl,
-                      audioUrl: audioUrl,
-                      isOwned: true,
-                    ),
-                  ));
-                },
-              );
-            }
-          ),
+      body: ListView.builder(
+        itemCount: userBooks.length,
+        itemBuilder: (context, i) {
+          final book = userBooks[i];
+          return ListTile(
+            leading: Icon(Icons.headphones),
+            title: Text(book.title),
+            subtitle: Text(book.author),
+            // tap: can navigate to Player/Details if desired.
+          );
+        },
+      ),
     );
   }
 }
