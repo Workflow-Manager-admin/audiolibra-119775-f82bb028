@@ -39,6 +39,15 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
+# Dependency overrides to ensure namespace-compliant audioplayers plugins.
+dependency_overrides:
+  audioplayers_android: ^4.0.0
+  audioplayers_darwin: ^4.0.0
+  audioplayers_linux: ^4.0.0
+  audioplayers_platform_interface: ^5.0.0
+  audioplayers_web: ^4.0.0
+  audioplayers_windows: ^4.0.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
