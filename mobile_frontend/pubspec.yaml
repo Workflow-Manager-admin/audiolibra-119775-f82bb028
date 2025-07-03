@@ -30,8 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
   shared_preferences: ^2.2.2
+  cupertino_icons: ^1.0.8
   just_audio: ^0.9.36
 
 dev_dependencies:

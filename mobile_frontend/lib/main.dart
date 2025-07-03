@@ -1,447 +1,433 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(AudiolibraApp());
+// -- Data Model for Audiobook --
+class Audiobook {
+  final String id;
+  final String coverUrl;
+  final String title;
+  final String author;
+  final String description;
+  final double price;
+
+  Audiobook({
+    required this.id,
+    required this.coverUrl,
+    required this.title,
+    required this.author,
+    required this.description,
+    required this.price,
+  });
 }
 
-/// Root widget for the Audiolibra app with material theme and home set to StoreScreen.
+// -- Sample Audiobook Data --
+final List<Audiobook> sampleAudiobooks = [
+  Audiobook(
+    id: '1',
+    coverUrl: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=500',
+    title: 'The Flutter Journey',
+    author: 'Jane Dev',
+    description: 'Embark on a comprehensive journey through building stunning apps with Flutter, covering widgets, state, navigation, and more.',
+    price: 14.99,
+  ),
+  Audiobook(
+    id: '2',
+    coverUrl: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=500',
+    title: 'Soundscapes: Volume I',
+    author: 'Max Harmony',
+    description: 'Relax and unwind with beautiful soundscapes and the story behind each track, narrated by Max Harmony.',
+    price: 9.99,
+  ),
+  Audiobook(
+    id: '3',
+    coverUrl: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?w=500',
+    title: 'Mystery by Moonlight',
+    author: 'Luna Night',
+    description: 'A thrilling whodunit unfolds beneath the moonlight. Can you solve the puzzle before the last track?',
+    price: 11.49,
+  ),
+  Audiobook(
+    id: '4',
+    coverUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=500',
+    title: 'Code: The Untold Story',
+    author: 'Alex Syntax',
+    description: 'A fascinating narrative about the evolution of coding, intertwined with personal stories from developers around the globe.',
+    price: 16.99,
+  ),
+  Audiobook(
+    id: '5',
+    coverUrl: 'https://images.unsplash.com/photo-1503676382389-4809596d5290?w=500',
+    title: 'Voices of the Wild',
+    author: 'Sam Forest',
+    description: 'Adventure deep into the world\'s jungles and deserts with mesmerizing animal tales and sounds.',
+    price: 12.49,
+  ),
+];
+
+// -- Persistent Purchase Store --
+class PurchaseStorage with ChangeNotifier {
+  static const String _prefsKey = 'purchased_audiobooks';
+  Set<String> _purchasedIds = {};
+
+  Set<String> get purchasedIds => _purchasedIds;
+
+  PurchaseStorage() {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = prefs.getStringList(_prefsKey) ?? [];
+    _purchasedIds = Set<String>.from(ids);
+    notifyListeners();
+  }
+
+  Future<void> purchase(String audiobookId) async {
+    if (_purchasedIds.contains(audiobookId)) return;
+    _purchasedIds.add(audiobookId);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_prefsKey, _purchasedIds.toList());
+    notifyListeners();
+  }
+
+  bool isPurchased(String audiobookId) => _purchasedIds.contains(audiobookId);
+}
+
+// -- Main App --
+void main() {
+  runApp(const AudiolibraApp());
+}
+
 // PUBLIC_INTERFACE
 class AudiolibraApp extends StatelessWidget {
   const AudiolibraApp({super.key});
 
+  // PUBLIC_INTERFACE
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Audiolibra',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
         colorScheme: ColorScheme.light(
           primary: Color(0xFF1E88E5),
           secondary: Color(0xFF43A047),
         ),
+        appBarTheme: AppBarTheme(
+          color: Color(0xFF1E88E5),
+          foregroundColor: Colors.white,
+          elevation: 1,
+        ),
+        cardTheme: CardTheme(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
         useMaterial3: true,
       ),
-      home: AudiolibraHome(),
-      debugShowCheckedModeBanner: false,
+      home: StoreScreen(),
     );
   }
 }
 
-// Model for Audiobook
-class Audiobook {
-  final String id;
-  final String title;
-  final String author;
-  final String coverUrl;
-  final double price;
-  final String description;
-  final String audioUrl;
-  Audiobook({
-    required this.id,
-    required this.title,
-    required this.author,
-    required this.coverUrl,
-    required this.price,
-    required this.description,
-    required this.audioUrl,
-  });
-}
+// PUBLIC_INTERFACE
+class StoreScreen extends StatefulWidget {
+  // The grid view of audiobooks (Store).
+  const StoreScreen({super.key});
 
-// Sample data
-final List<Audiobook> sampleAudiobooks = [
-  Audiobook(
-      id: '1',
-      title: 'The Alchemist',
-      author: 'Paulo Coelho',
-      coverUrl: 'https://covers.openlibrary.org/b/id/8885024-L.jpg',
-      price: 9.99,
-      description: 'An allegorical novel that follows a young Andalusian shepherd on a journey to the Egyptian pyramids.',
-      audioUrl: 'https://samplelib.com/mp3/sample-3s.mp3'),
-  Audiobook(
-      id: '2',
-      title: '1984',
-      author: 'George Orwell',
-      coverUrl: 'https://covers.openlibrary.org/b/id/153541-L.jpg',
-      price: 7.49,
-      description: 'A dystopian tale about the perils of totalitarianism and government surveillance.',
-      audioUrl: 'https://samplelib.com/mp3/sample-6s.mp3'),
-  Audiobook(
-      id: '3',
-      title: 'To Kill a Mockingbird',
-      author: 'Harper Lee',
-      coverUrl: 'https://covers.openlibrary.org/b/id/10958323-L.jpg',
-      price: 8.99,
-      description: 'A classic exploration of racial injustice and childhood innocence in the Deep South.',
-      audioUrl: 'https://samplelib.com/mp3/sample-9s.mp3'),
-  Audiobook(
-      id: '4',
-      title: 'Atomic Habits',
-      author: 'James Clear',
-      coverUrl: 'https://covers.openlibrary.org/b/id/9350211-L.jpg',
-      price: 11.99,
-      description: 'A step-by-step guide to building good habits and breaking bad ones.',
-      audioUrl: 'https://samplelib.com/mp3/sample-15s.mp3'),
-  Audiobook(
-      id: '5',
-      title: 'Project Hail Mary',
-      author: 'Andy Weir',
-      coverUrl: 'https://covers.openlibrary.org/b/id/10582604-L.jpg',
-      price: 12.49,
-      description: 'A gripping tale of a man who wakes up alone on a spaceship with no memory of who he is.',
-      audioUrl: 'https://samplelib.com/mp3/sample-12s.mp3'),
-  Audiobook(
-      id: '6',
-      title: 'Educated',
-      author: 'Tara Westover',
-      coverUrl: 'https://covers.openlibrary.org/b/id/9270136-L.jpg',
-      price: 8.79,
-      description: 'A memoir about a young girl who, kept out of school, leaves her survivalist family and earns a PhD.',
-      audioUrl: 'https://samplelib.com/mp3/sample-6s.mp3'),
-];
-
-// Handles persistent library (purchased audiobooks) with SharedPreferences
-class LibraryManager {
-  static const _purchasedKey = 'purchased_books';
-
-  /// Loads the list of purchased audiobook IDs from local storage.
-  // PUBLIC_INTERFACE
-  static Future<Set<String>> loadPurchased() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_purchasedKey);
-    if (jsonString == null) return {};
-    final List<dynamic> raw = json.decode(jsonString);
-    return raw.map((e) => e as String).toSet();
-  }
-
-  /// Stores the list of purchased audiobook IDs.
-  // PUBLIC_INTERFACE
-  static Future<void> savePurchased(Set<String> purchased) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = json.encode(purchased.toList());
-    await prefs.setString(_purchasedKey, jsonString);
-  }
-}
-
-// Entry with Store and Library tabs
-class AudiolibraHome extends StatefulWidget {
   @override
-  State<AudiolibraHome> createState() => _AudiolibraHomeState();
+  State<StoreScreen> createState() => _StoreScreenState();
 }
 
-class _AudiolibraHomeState extends State<AudiolibraHome> {
-  int _selectedTab = 0;
-  Set<String> _purchased = {};
+class _StoreScreenState extends State<StoreScreen> {
+  late PurchaseStorage purchaseStorage;
 
   @override
   void initState() {
     super.initState();
-    _loadPurchased();
-  }
-
-  void _loadPurchased() async {
-    final library = await LibraryManager.loadPurchased();
-    setState(() {
-      _purchased = library;
-    });
-  }
-
-  void _purchaseBook(String id) {
-    setState(() {
-      _purchased.add(id);
-      LibraryManager.savePurchased(_purchased);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to your library!')));
-  }
-
-  void _goToDetail(Audiobook book) async {
-    final purchased = _purchased;
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (ctx) => AudiobookDetailScreen(
-              book: book,
-              purchased: purchased.contains(book.id),
-              onPurchase: () => _purchaseBook(book.id),
-          )),
-    );
-    if (result == 'purchased') {
-      _loadPurchased(); // refresh after purchase
-    }
-  }
-
-  Widget _buildStore() {
-    return StoreScreen(
-      audiobooks: sampleAudiobooks,
-      purchased: _purchased,
-      onDetail: _goToDetail,
-      onPurchase: _purchaseBook,
-    );
-  }
-
-  Widget _buildLibrary() {
-    final owned = sampleAudiobooks.where((b) => _purchased.contains(b.id)).toList();
-    return LibraryScreen(audiobooks: owned);
+    purchaseStorage = PurchaseStorage();
+    purchaseStorage.addListener(_onPurchaseChanged);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _selectedTab == 0 ? _buildStore() : _buildLibrary(),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedTab,
-        onDestinationSelected: (idx) => setState(() => _selectedTab = idx),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.store), label: "Store"),
-          NavigationDestination(icon: Icon(Icons.library_books), label: "Library"),
-        ],
+  void dispose() {
+    purchaseStorage.removeListener(_onPurchaseChanged);
+    super.dispose();
+  }
+
+  void _onPurchaseChanged() {
+    setState(() {});
+  }
+
+  void _openDetailsModal(BuildContext modalContext, Audiobook book) {
+    showModalBottomSheet(
+      context: modalContext,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (ctx) => FractionallySizedBox(
+        heightFactor: 0.93,
+        child: AudiobookDetailModal(
+          audiobook: book,
+          isPurchased: purchaseStorage.isPurchased(book.id),
+          onBuy: () {
+            // Close the modal immediately before performing async operation to avoid context crossing
+            if (Navigator.of(ctx).canPop()) {
+              Navigator.of(ctx).pop();
+            }
+            purchaseStorage.purchase(book.id);
+          },
+        ),
       ),
     );
   }
-}
 
-/// StoreScreen displays a grid of audiobooks for sale. Purchases update the library persistently.
-/// StoreScreen displays a grid of audiobooks for sale. Purchases update the library persistently.
-// PUBLIC_INTERFACE
-class StoreScreen extends StatelessWidget {
-  final List<Audiobook> audiobooks;
-  final Set<String> purchased;
-  final void Function(Audiobook book) onDetail;
-  final void Function(String id) onPurchase;
-
-  const StoreScreen({
-    super.key,
-    required this.audiobooks,
-    required this.purchased,
-    required this.onDetail,
-    required this.onPurchase,
-  });
-
+  // PUBLIC_INTERFACE
   @override
   Widget build(BuildContext context) {
-    final Color accent = Theme.of(context).colorScheme.secondary;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Audiolibra Store'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
-      backgroundColor: Colors.grey[100],
-      body: Padding(
-        padding: const EdgeInsets.all(12),
-        child: GridView.builder(
-          itemCount: audiobooks.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: MediaQuery.of(context).size.width < 600 ? 2 : 3,
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 14,
-            childAspectRatio: 0.65,
+        title: const Text('Audiolibra Store', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.library_books, color: Theme.of(context).colorScheme.secondary),
+            tooltip: 'Go to Library (to be implemented)',
+            onPressed: () {}, // Navigation to Library screen (future work)
           ),
-          itemBuilder: (ctx, idx) {
-            final book = audiobooks[idx];
-            final isOwned = purchased.contains(book.id);
-            return GestureDetector(
-              onTap: () => onDetail(book),
-              child: Material(
-                elevation: 2,
+        ],
+      ),
+      body: Container(
+        color: const Color(0xFFF4F9FD),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: GridView.builder(
+            itemCount: sampleAudiobooks.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 18,
+              crossAxisSpacing: 14,
+              childAspectRatio: 0.67,
+            ),
+            itemBuilder: (context, i) {
+              final book = sampleAudiobooks[i];
+              final purchased = purchaseStorage.isPurchased(book.id);
+
+              return InkWell(
                 borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                onTap: () => _openDetailsModal(context, book),
+                child: Card(
+                  color: Colors.white,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                          child: Image.network(
-                            book.coverUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_,__,___) => Container(
-                                color: Colors.grey.shade200,
-                                child: Icon(Icons.image_not_supported)),
+                      const SizedBox(height: 14),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          book.coverUrl,
+                          height: 135,
+                          width: 105,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, stack) => Container(
+                            color: Colors.grey[200], height: 135, width: 105,
+                            child: Icon(Icons.book, color: Colors.grey),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        padding: const EdgeInsets.symmetric(horizontal: 7),
+                        child: Text(
+                          book.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blueGrey[900],
+                              fontSize: 15
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        child: Text(
+                          book.author,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              color: Colors.blueGrey[600],
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: purchased
+                              ? const Color.fromRGBO(67, 160, 71, 0.10)
+                              : const Color.fromRGBO(30, 136, 229, 0.10),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(book.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                            Text(book.author,
-                                style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-                            SizedBox(height: 6),
-                            Text(isOwned ? "Purchased" : '\$${book.price.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    color: isOwned ? accent : Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.w600)),
+                            Icon(
+                              purchased ? Icons.check_circle_rounded : Icons.attach_money_rounded,
+                              color: purchased ? Color(0xFF43A047) : Color(0xFF1E88E5),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              purchased ? "Purchased" : book.price.toStringAsFixed(2),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: purchased ? Color(0xFF43A047) : Color(0xFF1E88E5),
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
 
-/// AudiobookDetailScreen shows details for a book, with a purchase button or owned state.
 // PUBLIC_INTERFACE
-class AudiobookDetailScreen extends StatelessWidget {
-  final Audiobook book;
-  final bool purchased;
-  final VoidCallback onPurchase;
+class AudiobookDetailModal extends StatelessWidget {
+  // Modal displaying the details for an audiobook and handling purchase.
+  final Audiobook audiobook;
+  final bool isPurchased;
+  final VoidCallback onBuy;
 
-  const AudiobookDetailScreen({
+  const AudiobookDetailModal({
     super.key,
-    required this.book,
-    required this.purchased,
-    required this.onPurchase,
+    required this.audiobook,
+    required this.isPurchased,
+    required this.onBuy,
   });
 
+  // PUBLIC_INTERFACE
   @override
   Widget build(BuildContext context) {
-    final Color accent = Theme.of(context).colorScheme.secondary;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(book.title,
-            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 20)),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(18),
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Column(
         children: [
-          AspectRatio(
-            aspectRatio: 2.6 / 3,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Image.network(
-                book.coverUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_,__,___) => Container(
-                    color: Colors.grey.shade200,
-                    child: Icon(Icons.image_not_supported)),
+          const SizedBox(height: 10),
+          Container(
+            height: 6,
+            width: 46,
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 7),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(13),
+                      child: Image.network(
+                        audiobook.coverUrl,
+                        height: 180,
+                        width: 135,
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => Container(
+                          color: Colors.grey[200], height: 180, width: 135,
+                          child: Icon(Icons.book, color: Colors.grey, size: 54),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      audiobook.title,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.blueGrey[900],
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "by ${audiobook.author}",
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      audiobook.description,
+                      style: TextStyle(
+                        color: Colors.blueGrey[800],
+                        fontSize: 15.5,
+                        height: 1.4,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPurchased
+                              ? Colors.grey[300]
+                              : theme.colorScheme.primary,
+                          foregroundColor: isPurchased
+                              ? Colors.grey[600]
+                              : Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(13),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 1.5,
+                        ),
+                        icon: Icon(
+                          isPurchased ? Icons.check_circle_outline : Icons.shopping_cart,
+                          size: 24,
+                        ),
+                        label: Text(
+                          isPurchased
+                              ? "Purchased"
+                              : "Buy for \$${audiobook.price.toStringAsFixed(2)}",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                        ),
+                        onPressed: isPurchased ? null : onBuy,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          SizedBox(height: 18),
-          Text(book.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 21)),
-          Text(book.author, style: TextStyle(fontSize: 16, color: Colors.grey[700])),
-          SizedBox(height: 16),
-          Text(book.description, style: TextStyle(fontSize: 15)),
-          SizedBox(height: 28),
-          purchased
-              ? ElevatedButton.icon(
-                  onPressed: null,
-                  icon: Icon(Icons.check, color: accent),
-                  label: Text('Already in Library', style: TextStyle(color: accent)),
-                  style: ElevatedButton.styleFrom(
-                      foregroundColor: accent,
-                      backgroundColor: Colors.grey[200],
-                      disabledBackgroundColor: Colors.grey[200]),
-                )
-              : ElevatedButton.icon(
-                  onPressed: () {
-                    onPurchase();
-                    Navigator.pop(context, 'purchased');
-                  },
-                  icon: Icon(Icons.shopping_cart_checkout),
-                  label: Text('Purchase \$${book.price.toStringAsFixed(2)}'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary),
-                ),
         ],
-      ),
-    );
-  }
-}
-
-/// LibraryScreen shows a list of purchased audiobooks.
-// PUBLIC_INTERFACE
-class LibraryScreen extends StatelessWidget {
-  final List<Audiobook> audiobooks;
-  const LibraryScreen({super.key, required this.audiobooks});
-
-  @override
-  Widget build(BuildContext context) {
-    if (audiobooks.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(36.0),
-          child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.library_books_outlined, size: 52, color: Colors.grey),
-                SizedBox(height: 22),
-                Text("Your library is empty!",
-                    style: TextStyle(fontSize: 18, color: Colors.grey[600])),
-                SizedBox(height: 12),
-                Text("Purchase books from the Store.",
-                    style: TextStyle(fontSize: 15, color: Colors.grey[500]))
-              ]),
-        ),
-      );
-    }
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Your Library'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
-      backgroundColor: Colors.grey[100],
-      body: ListView.separated(
-        itemCount: audiobooks.length,
-        separatorBuilder: (c, i) => Divider(height: 0, indent: 96, endIndent: 20),
-        itemBuilder: (ctx, idx) {
-          final book = audiobooks[idx];
-          return ListTile(
-            contentPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 18),
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(9),
-              child: Image.network(
-                book.coverUrl,
-                height: 60,
-                width: 48,
-                fit: BoxFit.cover,
-                errorBuilder: (_,__,___) => Container(
-                    color: Colors.grey.shade200,
-                    child: Icon(Icons.image_not_supported)),
-              ),
-            ),
-            title: Text(book.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-            subtitle: Text(book.author),
-            trailing: Icon(Icons.arrow_forward_ios_rounded, size: 18),
-            onTap: () {
-              Navigator.push(
-                ctx,
-                MaterialPageRoute(
-                  builder: (ctx) => AudiobookDetailScreen(
-                        book: book,
-                        purchased: true,
-                        onPurchase: () {},
-                  ),
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }
